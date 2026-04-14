@@ -97,10 +97,12 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
     {
         string trimmedBaseUrl = _runtime.BaseUrl.TrimEnd('/');
 
+        await _dotnetUtil.Build(projectPath, configuration: _options.BuildConfiguration, cancellationToken: cancellationToken).NoSync();
+
         _logger.LogInformation("Starting {ApplicationName} from {ProjectPath} on {BaseUrl}", _options.ApplicationName, projectPath, _runtime.BaseUrl);
 
         _runtime.DemoProcess = await _dotnetUtil.Start(projectPath, urls: trimmedBaseUrl, outputCallback: line => CaptureProjectOutput(line, isError: false),
-                                                    errorCallback: line => CaptureProjectOutput(line, isError: true),
+                                                    errorCallback: line => CaptureProjectOutput(line, isError: true), build: false,
                                                     configuration: _options.BuildConfiguration, cancellationToken: cancellationToken)
                                                 .NoSync();
 
