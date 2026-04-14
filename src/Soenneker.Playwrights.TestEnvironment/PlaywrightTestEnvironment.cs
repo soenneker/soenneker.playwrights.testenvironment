@@ -97,7 +97,10 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
     {
         string trimmedBaseUrl = _runtime.BaseUrl.TrimEnd('/');
 
-        await _dotnetUtil.Build(projectPath, configuration: _options.BuildConfiguration, cancellationToken: cancellationToken).NoSync();
+        await _dotnetUtil.Restore(projectPath, cancellationToken: cancellationToken)
+                         .NoSync();
+
+        await _dotnetUtil.Build(projectPath, configuration: _options.BuildConfiguration, restore: false, cancellationToken: cancellationToken).NoSync();
 
         _logger.LogInformation("Starting {ApplicationName} from {ProjectPath} on {BaseUrl}", _options.ApplicationName, projectPath, _runtime.BaseUrl);
 
