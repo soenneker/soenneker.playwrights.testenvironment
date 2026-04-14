@@ -2,7 +2,6 @@ using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using Soenneker.Extensions.String;
@@ -21,7 +20,6 @@ namespace Soenneker.Playwrights.TestEnvironment;
 ///<inheritdoc cref="IPlaywrightTestEnvironment"/>
 public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 {
-    private readonly IConfiguration _configuration;
     private readonly IDotnetUtil _dotnetUtil;
     private readonly INetworkUtil _networkUtil;
     private readonly IHttpClientCache _httpClientCache;
@@ -30,11 +28,10 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
     private readonly PlaywrightFixtureRuntime _runtime;
     private readonly ILogger<PlaywrightTestEnvironment> _logger;
 
-    public PlaywrightTestEnvironment(IConfiguration configuration, IDotnetUtil dotnetUtil, INetworkUtil networkUtil, IHttpClientCache httpClientCache,
+    public PlaywrightTestEnvironment(IDotnetUtil dotnetUtil, INetworkUtil networkUtil, IHttpClientCache httpClientCache,
         IPlaywrightInstallationUtil playwrightInstallationUtil, PlaywrightFixtureOptions options, PlaywrightFixtureRuntime runtime,
         ILogger<PlaywrightTestEnvironment> logger)
     {
-        _configuration = configuration;
         _dotnetUtil = dotnetUtil;
         _networkUtil = networkUtil;
         _httpClientCache = httpClientCache;
@@ -86,22 +83,14 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
         if (_runtime.Playwright is null)
             throw new InvalidOperationException("Playwright has not been initialized.");
 
-        string browser = _configuration["Playwright:Browser"]
-                         ?.Trim()
-                         .ToLowerInvariantFast() ?? "chromium";
-
         var options = new BrowserTypeLaunchOptions
         {
-            Headless = true
+            Headless = true,
+            Channel = "chromium"
         };
 
-        return browser switch
-        {
-            "chromium" => await _runtime.Playwright.Chromium.LaunchAsync(options),
-            "firefox" => await _runtime.Playwright.Firefox.LaunchAsync(options),
-            "webkit" => await _runtime.Playwright.Webkit.LaunchAsync(options),
-            _ => throw new InvalidOperationException($"Unsupported Playwright browser '{browser}'.")
-        };
+        return await _runtime.Playwright.Chromium.LaunchAsync(options)
+                             .NoSync();
     }
 
     private async ValueTask StartProject(string projectPath, CancellationToken cancellationToken)
@@ -109,7 +98,6 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
         string trimmedBaseUrl = _runtime.BaseUrl.TrimEnd('/');
 
         _logger.LogInformation("Starting {ApplicationName} from {ProjectPath} on {BaseUrl}", _options.ApplicationName, projectPath, _runtime.BaseUrl);
-        Console.WriteLine($"[fixture] Starting {_options.ApplicationName} on {_runtime.BaseUrl}");
 
         _runtime.DemoProcess = await _dotnetUtil.Start(projectPath, urls: trimmedBaseUrl, outputCallback: line => CaptureProjectOutput(line, isError: false),
                                                     errorCallback: line => CaptureProjectOutput(line, isError: true),
