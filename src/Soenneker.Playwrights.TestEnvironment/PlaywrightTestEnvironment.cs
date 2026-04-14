@@ -113,14 +113,19 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 
     private async ValueTask WaitForProjectReady(CancellationToken cancellationToken)
     {
-        HttpClient client = await _httpClientCache.Get(GetType()
-                                                      .FullName ?? nameof(PlaywrightTestEnvironment), cancellationToken: cancellationToken)
-                                                  .NoSync();
+        HttpClient client = await _httpClientCache.Get(GetType().FullName ?? nameof(PlaywrightTestEnvironment),
+            cancellationToken: cancellationToken).NoSync();
 
-        for (var attempt = 0; attempt < 20; attempt++)
+        Exception? lastException = null;
+
+        int port = new Uri(_runtime.BaseUrl).Port;
+
+        const int maxAttempts = 120;
+
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
         {
-            _logger.LogInformation("Waiting for {ApplicationName} readiness, attempt {Attempt}/20 at {BaseUrl}", _options.ApplicationName, attempt + 1,
-                _runtime.BaseUrl);
+            _logger.LogInformation("Waiting for {ApplicationName} readiness, attempt {Attempt}/{MaxAttempts} at {BaseUrl}",
+                _options.ApplicationName, attempt + 1, maxAttempts, _runtime.BaseUrl);
 
             if (_runtime.DemoProcess is not null && _runtime.DemoProcess.HasExited)
             {
@@ -130,24 +135,45 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 
             try
             {
-                using HttpResponseMessage response = await client.GetAsync(_runtime.BaseUrl, cancellationToken)
-                                                                 .NoSync();
-
-                if (response.IsSuccessStatusCode)
+                // First, wait for the server socket to actually be listening.
+                if (!_networkUtil.IsPortBusy(port))
                 {
-                    _logger.LogInformation("{ApplicationName} is ready at {BaseUrl}", _options.ApplicationName, _runtime.BaseUrl);
-                    return;
+                    await DelayUtil.Delay(1000, _logger, cancellationToken).NoSync();
+                    continue;
                 }
+
+                // Once the port is open, an HTTP response of any kind is enough to prove
+                // Kestrel is alive and accepting requests. Do not require 200 OK.
+                using var request = new HttpRequestMessage(HttpMethod.Get, _runtime.BaseUrl);
+
+                using HttpResponseMessage response = await client.SendAsync(request,
+                        HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                    .NoSync();
+
+                _logger.LogInformation("{ApplicationName} is ready at {BaseUrl}. Status code: {StatusCode}",
+                    _options.ApplicationName, _runtime.BaseUrl, (int)response.StatusCode);
+
+                return;
             }
-            catch
+            catch (HttpRequestException ex)
             {
+                lastException = ex;
+            }
+            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                lastException = ex;
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
             }
 
-            await DelayUtil.Delay(500, _logger, cancellationToken)
-                           .NoSync();
+            await DelayUtil.Delay(1000, _logger, cancellationToken).NoSync();
         }
 
-        throw new TimeoutException($"Timed out waiting for {_options.ApplicationName} at {_runtime.BaseUrl}.{Environment.NewLine}");
+        throw new TimeoutException(
+            $"Timed out waiting for {_options.ApplicationName} at {_runtime.BaseUrl}.{Environment.NewLine}" +
+            $"Last startup error: {lastException?.Message ?? "None"}{Environment.NewLine}");
     }
 
     private void CaptureProjectOutput(string line, bool isError)

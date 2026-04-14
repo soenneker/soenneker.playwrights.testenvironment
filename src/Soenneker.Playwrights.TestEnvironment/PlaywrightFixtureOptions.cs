@@ -8,5 +8,5 @@ public sealed class PlaywrightFixtureOptions
 
     public string ApplicationName { get; init; } = "application";
 
-    public string BuildConfiguration { get; init; } = "Debug";
+    public string BuildConfiguration { get; init; } = "Release";
 }
