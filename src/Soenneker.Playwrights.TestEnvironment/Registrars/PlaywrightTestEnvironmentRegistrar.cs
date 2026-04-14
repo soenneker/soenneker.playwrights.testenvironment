@@ -14,7 +14,7 @@ namespace Soenneker.Playwrights.TestEnvironment.Registrars;
 /// </summary>
 public static class PlaywrightTestEnvironmentRegistrar
 {
-    public static IServiceCollection AddConfigurationUtilAsSingleton(this IServiceCollection services)
+    public static IServiceCollection AddPlaywrightTestEnvironmentAsSingleton(this IServiceCollection services)
     {
         services.AddNetworkUtilAsSingleton()
                 .AddFileUtilAsSingleton()
@@ -28,13 +28,13 @@ public static class PlaywrightTestEnvironmentRegistrar
         return services;
     }
 
-    public static IServiceCollection AddConfigurationUtilAsScoped(this IServiceCollection services)
+    public static IServiceCollection AddPlaywrightTestEnvironmentAsScoped(this IServiceCollection services)
     {
         services.AddNetworkUtilAsScoped()
                 .AddFileUtilAsScoped()
                 .AddDotnetUtilAsScoped()
                 .AddHttpClientCacheAsSingleton()
-                .AddPlaywrightInstallationUtilAsScoped();
+                .AddPlaywrightInstallationUtilAsSingleton();
 
         services.TryAddSingleton<PlaywrightFixtureRuntime>();
         services.TryAddScoped<IPlaywrightTestEnvironment, PlaywrightTestEnvironment>();
