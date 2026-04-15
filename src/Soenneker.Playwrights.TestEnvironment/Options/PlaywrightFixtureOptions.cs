@@ -8,6 +8,10 @@ public sealed class PlaywrightFixtureOptions
 
     public string ApplicationName { get; init; } = "application";
 
+    public bool Restore { get; init; } = true;
+
+    public bool Build { get; init; } = true;
+
     public string BuildConfiguration { get; init; } = "Release";
 
     public bool ReuseBrowserContextAcrossSessions { get; init; }
