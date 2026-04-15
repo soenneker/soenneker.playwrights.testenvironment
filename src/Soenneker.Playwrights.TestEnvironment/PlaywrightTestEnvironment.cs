@@ -64,7 +64,7 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
             .NoSync();
     }
 
-    public async ValueTask<BrowserSession> CreateSession(PlaywrightSessionOptions? sessionOptions = null)
+    public async ValueTask<BrowserSession> CreateSession(PlaywrightSessionOptions? sessionOptions = null, CancellationToken cancellationToken = default)
     {
         if (_runtime.Browser is null)
             throw new InvalidOperationException("Browser has not been initialized.");
@@ -77,10 +77,10 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 
         if (reusePageAcrossSessions)
         {
-            IBrowserContext sharedContext = await GetOrCreateSharedContext()
+            IBrowserContext sharedContext = await GetOrCreateSharedContext(cancellationToken)
                 .NoSync();
 
-            IPage sharedPage = await GetOrCreateSharedPage(sharedContext)
+            IPage sharedPage = await GetOrCreateSharedPage(sharedContext, cancellationToken)
                 .NoSync();
 
             return new BrowserSession(sharedContext, sharedPage, ownsContext: false, ownsPage: false);
@@ -88,7 +88,7 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 
         if (reuseBrowserContextAcrossSessions)
         {
-            IBrowserContext sharedContext = await GetOrCreateSharedContext()
+            IBrowserContext sharedContext = await GetOrCreateSharedContext(cancellationToken)
                 .NoSync();
 
             IPage sharedPage = await sharedContext.NewPageAsync()
@@ -132,12 +132,12 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
         }).NoSync();
     }
 
-    private async ValueTask<IBrowserContext> GetOrCreateSharedContext()
+    private async ValueTask<IBrowserContext> GetOrCreateSharedContext(CancellationToken cancellationToken)
     {
         if (_runtime.SharedContext is not null)
             return _runtime.SharedContext;
 
-        using (await _sharedSessionLock.Lock())
+        using (await _sharedSessionLock.Lock(cancellationToken).NoSync())
         {
             if (_runtime.SharedContext is null)
             {
@@ -149,12 +149,12 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
         }
     }
 
-    private async ValueTask<IPage> GetOrCreateSharedPage(IBrowserContext context)
+    private async ValueTask<IPage> GetOrCreateSharedPage(IBrowserContext context, CancellationToken cancellationToken)
     {
         if (_runtime.SharedPage is not null && !_runtime.SharedPage.IsClosed)
             return _runtime.SharedPage;
 
-        using (await _sharedSessionLock.Lock())
+        using (await _sharedSessionLock.Lock(cancellationToken))
         {
             if (_runtime.SharedPage is null || _runtime.SharedPage.IsClosed)
                 _runtime.SharedPage = await context.NewPageAsync().NoSync();
