@@ -1,4 +1,4 @@
-namespace Soenneker.Playwrights.TestEnvironment;
+namespace Soenneker.Playwrights.TestEnvironment.Options;
 
 public sealed class PlaywrightFixtureOptions
 {
@@ -9,4 +9,8 @@ public sealed class PlaywrightFixtureOptions
     public string ApplicationName { get; init; } = "application";
 
     public string BuildConfiguration { get; init; } = "Release";
+
+    public bool ReuseBrowserContextAcrossSessions { get; init; }
+
+    public bool ReusePageAcrossSessions { get; init; }
 }

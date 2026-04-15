@@ -4,12 +4,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
+using Soenneker.Asyncs.Locks;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Playwrights.Installation.Abstract;
 using Soenneker.Playwrights.Session;
 using Soenneker.Playwrights.TestEnvironment.Abstract;
+using Soenneker.Playwrights.TestEnvironment.Options;
 using Soenneker.Utils.Delay;
 using Soenneker.Utils.Dotnet.Abstract;
 using Soenneker.Utils.HttpClientCache.Abstract;
@@ -20,6 +22,7 @@ namespace Soenneker.Playwrights.TestEnvironment;
 ///<inheritdoc cref="IPlaywrightTestEnvironment"/>
 public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 {
+    private readonly AsyncLock _sharedSessionLock = new();
     private readonly IDotnetUtil _dotnetUtil;
     private readonly INetworkUtil _networkUtil;
     private readonly IHttpClientCache _httpClientCache;
@@ -61,16 +64,41 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
             .NoSync();
     }
 
-    public async ValueTask<BrowserSession> CreateSession()
+    public async ValueTask<BrowserSession> CreateSession(PlaywrightSessionOptions? sessionOptions = null)
     {
         if (_runtime.Browser is null)
             throw new InvalidOperationException("Browser has not been initialized.");
 
-        IBrowserContext context = await _runtime.Browser.NewContextAsync(new BrowserNewContextOptions
-                                                {
-                                                    BaseURL = _runtime.BaseUrl
-                                                })
-                                                .NoSync();
+        bool reusePageAcrossSessions = sessionOptions?.ReusePageAcrossSessions ?? _options.ReusePageAcrossSessions;
+        bool reuseBrowserContextAcrossSessions = sessionOptions?.ReuseBrowserContextAcrossSessions ?? _options.ReuseBrowserContextAcrossSessions;
+
+        if (reusePageAcrossSessions)
+            reuseBrowserContextAcrossSessions = true;
+
+        if (reusePageAcrossSessions)
+        {
+            IBrowserContext sharedContext = await GetOrCreateSharedContext()
+                .NoSync();
+
+            IPage sharedPage = await GetOrCreateSharedPage(sharedContext)
+                .NoSync();
+
+            return new BrowserSession(sharedContext, sharedPage, ownsContext: false, ownsPage: false);
+        }
+
+        if (reuseBrowserContextAcrossSessions)
+        {
+            IBrowserContext sharedContext = await GetOrCreateSharedContext()
+                .NoSync();
+
+            IPage sharedPage = await sharedContext.NewPageAsync()
+                                                  .NoSync();
+
+            return new BrowserSession(sharedContext, sharedPage, ownsContext: false);
+        }
+
+        IBrowserContext context = await CreateContext()
+            .NoSync();
 
         IPage page = await context.NewPageAsync()
                                   .NoSync();
@@ -91,6 +119,48 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 
         return await _runtime.Playwright.Chromium.LaunchAsync(options)
                              .NoSync();
+    }
+
+    private async ValueTask<IBrowserContext> CreateContext()
+    {
+        if (_runtime.Browser is null)
+            throw new InvalidOperationException("Browser has not been initialized.");
+
+        return await _runtime.Browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            BaseURL = _runtime.BaseUrl
+        }).NoSync();
+    }
+
+    private async ValueTask<IBrowserContext> GetOrCreateSharedContext()
+    {
+        if (_runtime.SharedContext is not null)
+            return _runtime.SharedContext;
+
+        using (await _sharedSessionLock.Lock())
+        {
+            if (_runtime.SharedContext is null)
+            {
+                _runtime.SharedContext = await CreateContext()
+                    .NoSync();
+            }
+
+            return _runtime.SharedContext;
+        }
+    }
+
+    private async ValueTask<IPage> GetOrCreateSharedPage(IBrowserContext context)
+    {
+        if (_runtime.SharedPage is not null && !_runtime.SharedPage.IsClosed)
+            return _runtime.SharedPage;
+
+        using (await _sharedSessionLock.Lock())
+        {
+            if (_runtime.SharedPage is null || _runtime.SharedPage.IsClosed)
+                _runtime.SharedPage = await context.NewPageAsync().NoSync();
+
+            return _runtime.SharedPage;
+        }
     }
 
     private async ValueTask StartProject(string projectPath, CancellationToken cancellationToken)
@@ -202,11 +272,38 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 
         try
         {
+            if (_runtime.SharedPage is not null && !_runtime.SharedPage.IsClosed)
+                await _runtime.SharedPage.CloseAsync()
+                              .NoSync();
+
+            _runtime.SharedPage = null;
+        }
+        catch (Exception ex)
+        {
+            exception = ex;
+        }
+
+        try
+        {
+            if (_runtime.SharedContext is not null)
+            {
+                await _runtime.SharedContext.DisposeAsync()
+                              .NoSync();
+                _runtime.SharedContext = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            exception = ex;
+        }
+
+        try
+        {
             if (_runtime.Browser is not null)
                 await _runtime.Browser.DisposeAsync()
                               .NoSync();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (exception is null)
         {
             exception = ex;
         }

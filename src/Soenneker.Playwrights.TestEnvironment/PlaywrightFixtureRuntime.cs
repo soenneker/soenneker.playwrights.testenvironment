@@ -11,5 +11,9 @@ public sealed class PlaywrightFixtureRuntime
 
     public IBrowser? Browser { get; set; }
 
+    public IBrowserContext? SharedContext { get; set; }
+
+    public IPage? SharedPage { get; set; }
+
     public Process? DemoProcess { get; set; }
 }

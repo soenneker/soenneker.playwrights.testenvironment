@@ -37,17 +37,25 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Remove="NewFolder\**" />
+      <EmbeddedResource Remove="NewFolder\**" />
+      <None Remove="NewFolder\**" />
+    </ItemGroup>
+
+    <ItemGroup>
         <None Include="..\..\README.md" Pack="true" PackagePath="\" />
         <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
         <None Include="..\..\icon.png" Pack="true" PackagePath="\" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Soenneker.Asyncs.Locks" Version="4.0.41" />
       <PackageReference Include="Soenneker.Playwrights.Installation" Version="4.0.5" />
-      <PackageReference Include="Soenneker.Playwrights.Session" Version="4.0.1" />
+      <PackageReference Include="Soenneker.Playwrights.Session" Version="4.0.2" />
       <PackageReference Include="Soenneker.Utils.Delay" Version="4.0.63" />
       <PackageReference Include="Soenneker.Utils.Dotnet" Version="4.0.2370" />
       <PackageReference Include="Soenneker.Utils.HttpClientCache" Version="4.0.1927" />
       <PackageReference Include="Soenneker.Utils.Network" Version="4.0.1193" />
     </ItemGroup>
+        
 </Project>
