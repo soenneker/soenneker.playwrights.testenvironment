@@ -27,12 +27,12 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
     private readonly INetworkUtil _networkUtil;
     private readonly IHttpClientCache _httpClientCache;
     private readonly IPlaywrightInstallationUtil _playwrightInstallationUtil;
-    private readonly PlaywrightFixtureOptions _options;
+    private readonly PlaywrightHostOptions _options;
     private readonly PlaywrightFixtureRuntime _runtime;
     private readonly ILogger<PlaywrightTestEnvironment> _logger;
 
     public PlaywrightTestEnvironment(IDotnetUtil dotnetUtil, INetworkUtil networkUtil, IHttpClientCache httpClientCache,
-        IPlaywrightInstallationUtil playwrightInstallationUtil, PlaywrightFixtureOptions options, PlaywrightFixtureRuntime runtime,
+        IPlaywrightInstallationUtil playwrightInstallationUtil, PlaywrightHostOptions options, PlaywrightFixtureRuntime runtime,
         ILogger<PlaywrightTestEnvironment> logger)
     {
         _dotnetUtil = dotnetUtil;
@@ -51,17 +51,13 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
         _runtime.BaseUrl = $"http://127.0.0.1:{_networkUtil.GetFreePort()}/";
         BaseUrl = _runtime.BaseUrl;
 
-        await _playwrightInstallationUtil.EnsureInstalled(cancellationToken)
-                                         .NoSync();
+        await _playwrightInstallationUtil.EnsureInstalled(cancellationToken).NoSync();
 
-        _runtime.Playwright = await Playwright.CreateAsync()
-                                              .NoSync();
+        _runtime.Playwright = await Playwright.CreateAsync().NoSync();
 
-        _runtime.Browser = await LaunchBrowser()
-            .NoSync();
+        _runtime.Browser = await LaunchBrowser().NoSync();
 
-        await StartProject(projectPath, cancellationToken)
-            .NoSync();
+        await StartProject(projectPath, cancellationToken).NoSync();
     }
 
     public async ValueTask<BrowserSession> CreateSession(PlaywrightSessionOptions? sessionOptions = null, CancellationToken cancellationToken = default)
@@ -77,31 +73,25 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 
         if (reusePageAcrossSessions)
         {
-            IBrowserContext sharedContext = await GetOrCreateSharedContext(cancellationToken)
-                .NoSync();
+            IBrowserContext sharedContext = await GetOrCreateSharedContext(cancellationToken).NoSync();
 
-            IPage sharedPage = await GetOrCreateSharedPage(sharedContext, cancellationToken)
-                .NoSync();
+            IPage sharedPage = await GetOrCreateSharedPage(sharedContext, cancellationToken).NoSync();
 
             return new BrowserSession(sharedContext, sharedPage, ownsContext: false, ownsPage: false);
         }
 
         if (reuseBrowserContextAcrossSessions)
         {
-            IBrowserContext sharedContext = await GetOrCreateSharedContext(cancellationToken)
-                .NoSync();
+            IBrowserContext sharedContext = await GetOrCreateSharedContext(cancellationToken).NoSync();
 
-            IPage sharedPage = await sharedContext.NewPageAsync()
-                                                  .NoSync();
+            IPage sharedPage = await sharedContext.NewPageAsync().NoSync();
 
             return new BrowserSession(sharedContext, sharedPage, ownsContext: false);
         }
 
-        IBrowserContext context = await CreateContext()
-            .NoSync();
+        IBrowserContext context = await CreateContext().NoSync();
 
-        IPage page = await context.NewPageAsync()
-                                  .NoSync();
+        IPage page = await context.NewPageAsync().NoSync();
 
         return new BrowserSession(context, page);
     }
@@ -117,8 +107,7 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
             Channel = "chromium"
         };
 
-        return await _runtime.Playwright.Chromium.LaunchAsync(options)
-                             .NoSync();
+        return await _runtime.Playwright.Chromium.LaunchAsync(options).NoSync();
     }
 
     private async ValueTask<IBrowserContext> CreateContext()
@@ -141,8 +130,7 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
         {
             if (_runtime.SharedContext is null)
             {
-                _runtime.SharedContext = await CreateContext()
-                    .NoSync();
+                _runtime.SharedContext = await CreateContext().NoSync();
             }
 
             return _runtime.SharedContext;
@@ -169,34 +157,29 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 
         if (_options.Restore)
         {
-            await _dotnetUtil.Restore(projectPath, cancellationToken: cancellationToken)
-                             .NoSync();
+            await _dotnetUtil.Restore(projectPath, cancellationToken: cancellationToken).NoSync();
         }
 
         if (_options.Build)
         {
-            await _dotnetUtil.Build(projectPath, configuration: _options.BuildConfiguration, restore: false, cancellationToken: cancellationToken)
-                             .NoSync();
+            await _dotnetUtil.Build(projectPath, configuration: _options.BuildConfiguration, restore: false, cancellationToken: cancellationToken).NoSync();
         }
 
         _logger.LogInformation("Starting {ApplicationName} from {ProjectPath} on {BaseUrl}", _options.ApplicationName, projectPath, _runtime.BaseUrl);
 
         _runtime.DemoProcess = await _dotnetUtil.Start(projectPath, urls: trimmedBaseUrl, outputCallback: line => CaptureProjectOutput(line, isError: false),
-                                                    errorCallback: line => CaptureProjectOutput(line, isError: true), build: false,
-                                                    configuration: _options.BuildConfiguration, cancellationToken: cancellationToken)
-                                                .NoSync();
+            errorCallback: line => CaptureProjectOutput(line, isError: true), build: false, configuration: _options.BuildConfiguration,
+            cancellationToken: cancellationToken).NoSync();
 
         if (_runtime.DemoProcess is null)
             throw new InvalidOperationException($"Failed to start the '{_options.ApplicationName}' project '{projectPath}'.");
 
-        await WaitForProjectReady(cancellationToken)
-            .NoSync();
+        await WaitForProjectReady(cancellationToken).NoSync();
     }
 
     private async ValueTask WaitForProjectReady(CancellationToken cancellationToken)
     {
-        HttpClient client = await _httpClientCache.Get(GetType().FullName ?? nameof(PlaywrightTestEnvironment),
-            cancellationToken: cancellationToken).NoSync();
+        HttpClient client = await _httpClientCache.Get(GetType().FullName ?? nameof(PlaywrightTestEnvironment), cancellationToken: cancellationToken).NoSync();
 
         Exception? lastException = null;
 
@@ -206,8 +189,8 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 
         for (var attempt = 0; attempt < maxAttempts; attempt++)
         {
-            _logger.LogInformation("Waiting for {ApplicationName} readiness, attempt {Attempt}/{MaxAttempts} at {BaseUrl}",
-                _options.ApplicationName, attempt + 1, maxAttempts, _runtime.BaseUrl);
+            _logger.LogInformation("Waiting for {ApplicationName} readiness, attempt {Attempt}/{MaxAttempts} at {BaseUrl}", _options.ApplicationName,
+                attempt + 1, maxAttempts, _runtime.BaseUrl);
 
             if (_runtime.DemoProcess is not null && _runtime.DemoProcess.HasExited)
             {
@@ -228,12 +211,10 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
                 // Kestrel is alive and accepting requests. Do not require 200 OK.
                 using var request = new HttpRequestMessage(HttpMethod.Get, _runtime.BaseUrl);
 
-                using HttpResponseMessage response = await client.SendAsync(request,
-                        HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-                    .NoSync();
+                using HttpResponseMessage response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).NoSync();
 
-                _logger.LogInformation("{ApplicationName} is ready at {BaseUrl}. Status code: {StatusCode}",
-                    _options.ApplicationName, _runtime.BaseUrl, (int)response.StatusCode);
+                _logger.LogInformation("{ApplicationName} is ready at {BaseUrl}. Status code: {StatusCode}", _options.ApplicationName, _runtime.BaseUrl,
+                    (int)response.StatusCode);
 
                 return;
             }
@@ -253,9 +234,8 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
             await DelayUtil.Delay(1000, _logger, cancellationToken).NoSync();
         }
 
-        throw new TimeoutException(
-            $"Timed out waiting for {_options.ApplicationName} at {_runtime.BaseUrl}.{Environment.NewLine}" +
-            $"Last startup error: {lastException?.Message ?? "None"}{Environment.NewLine}");
+        throw new TimeoutException($"Timed out waiting for {_options.ApplicationName} at {_runtime.BaseUrl}.{Environment.NewLine}" +
+                                   $"Last startup error: {lastException?.Message ?? "None"}{Environment.NewLine}");
     }
 
     private void CaptureProjectOutput(string line, bool isError)
@@ -263,8 +243,7 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
         if (line.IsNullOrWhiteSpace())
             return;
 
-        string prefix = _options.ApplicationName.ToLowerInvariantFast()
-                                .Replace(' ', '-');
+        string prefix = _options.ApplicationName.ToLowerInvariantFast().Replace(' ', '-');
         string formatted = isError ? $"[{prefix}:err] {line}" : $"[{prefix}] {line}";
 
         if (isError)
@@ -280,8 +259,7 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
         try
         {
             if (_runtime.SharedPage is not null && !_runtime.SharedPage.IsClosed)
-                await _runtime.SharedPage.CloseAsync()
-                              .NoSync();
+                await _runtime.SharedPage.CloseAsync().NoSync();
 
             _runtime.SharedPage = null;
         }
@@ -294,8 +272,7 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
         {
             if (_runtime.SharedContext is not null)
             {
-                await _runtime.SharedContext.DisposeAsync()
-                              .NoSync();
+                await _runtime.SharedContext.DisposeAsync().NoSync();
                 _runtime.SharedContext = null;
             }
         }
@@ -307,8 +284,7 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
         try
         {
             if (_runtime.Browser is not null)
-                await _runtime.Browser.DisposeAsync()
-                              .NoSync();
+                await _runtime.Browser.DisposeAsync().NoSync();
         }
         catch (Exception ex) when (exception is null)
         {
@@ -346,9 +322,7 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
             exception = ex;
         }
 
-        await _httpClientCache.Remove(GetType()
-                                  .FullName ?? nameof(PlaywrightTestEnvironment))
-                              .NoSync();
+        await _httpClientCache.Remove(GetType().FullName ?? nameof(PlaywrightTestEnvironment)).NoSync();
 
         if (exception is not null)
             throw exception;

@@ -1,6 +1,6 @@
 namespace Soenneker.Playwrights.TestEnvironment.Options;
 
-public sealed class PlaywrightFixtureOptions
+public sealed class PlaywrightHostOptions
 {
     public required string SolutionFileName { get; init; }
 

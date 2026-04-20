@@ -1,11 +1,10 @@
 using Soenneker.Tests.Unit;
-using Xunit;
 
 namespace Soenneker.Playwrights.TestEnvironment.Tests;
 
 public sealed class PlaywrightTestEnvironmentTests : UnitTest
 {
-    [Fact]
+    [Test]
     public void Default()
     {
 
