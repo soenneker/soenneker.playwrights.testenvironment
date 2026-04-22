@@ -1,5 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net10.0</TargetFramework>
@@ -8,12 +7,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Tests.Unit" Version="4.0.1110" />
+        <PackageReference Include="Soenneker.Tests.Unit" Version="4.0.1115" />
         <PackageReference Include="TUnit" Version="1.37.0" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Soenneker.Playwrights.TestEnvironment\Soenneker.Playwrights.TestEnvironment.csproj" />
     </ItemGroup>
-
 </Project>
