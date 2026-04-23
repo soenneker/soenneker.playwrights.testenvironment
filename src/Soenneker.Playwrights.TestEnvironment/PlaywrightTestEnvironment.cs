@@ -27,12 +27,12 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
     private readonly INetworkUtil _networkUtil;
     private readonly IHttpClientCache _httpClientCache;
     private readonly IPlaywrightInstallationUtil _playwrightInstallationUtil;
-    private readonly PlaywrightHostOptions _options;
-    private readonly PlaywrightFixtureRuntime _runtime;
+    private readonly PlaywrightTestHostOptions _options;
+    private readonly PlaywrightTestHostRuntime _runtime;
     private readonly ILogger<PlaywrightTestEnvironment> _logger;
 
     public PlaywrightTestEnvironment(IDotnetUtil dotnetUtil, INetworkUtil networkUtil, IHttpClientCache httpClientCache,
-        IPlaywrightInstallationUtil playwrightInstallationUtil, PlaywrightHostOptions options, PlaywrightFixtureRuntime runtime,
+        IPlaywrightInstallationUtil playwrightInstallationUtil, PlaywrightTestHostOptions options, PlaywrightTestHostRuntime runtime,
         ILogger<PlaywrightTestEnvironment> logger)
     {
         _dotnetUtil = dotnetUtil;

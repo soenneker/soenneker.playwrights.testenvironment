@@ -3,7 +3,7 @@ using Microsoft.Playwright;
 
 namespace Soenneker.Playwrights.TestEnvironment;
 
-public sealed class PlaywrightFixtureRuntime
+public sealed class PlaywrightTestHostRuntime
 {
     public string BaseUrl { get; set; } = null!;
 

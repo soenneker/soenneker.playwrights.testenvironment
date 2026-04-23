@@ -22,7 +22,7 @@ public static class PlaywrightTestEnvironmentRegistrar
                 .AddHttpClientCacheAsSingleton()
                 .AddPlaywrightInstallationUtilAsSingleton();
 
-        services.TryAddSingleton<PlaywrightFixtureRuntime>();
+        services.TryAddSingleton<PlaywrightTestHostRuntime>();
         services.TryAddSingleton<IPlaywrightTestEnvironment, PlaywrightTestEnvironment>();
 
         return services;
@@ -36,7 +36,7 @@ public static class PlaywrightTestEnvironmentRegistrar
                 .AddHttpClientCacheAsSingleton()
                 .AddPlaywrightInstallationUtilAsSingleton();
 
-        services.TryAddSingleton<PlaywrightFixtureRuntime>();
+        services.TryAddSingleton<PlaywrightTestHostRuntime>();
         services.TryAddScoped<IPlaywrightTestEnvironment, PlaywrightTestEnvironment>();
 
         return services;
