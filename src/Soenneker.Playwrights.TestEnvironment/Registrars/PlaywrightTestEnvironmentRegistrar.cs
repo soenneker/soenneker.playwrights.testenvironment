@@ -14,6 +14,11 @@ namespace Soenneker.Playwrights.TestEnvironment.Registrars;
 /// </summary>
 public static class PlaywrightTestEnvironmentRegistrar
 {
+    /// <summary>
+    /// Adds playwright test environment as singleton.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The result of the operation.</returns>
     public static IServiceCollection AddPlaywrightTestEnvironmentAsSingleton(this IServiceCollection services)
     {
         services.AddNetworkUtilAsSingleton()
@@ -28,6 +33,11 @@ public static class PlaywrightTestEnvironmentRegistrar
         return services;
     }
 
+    /// <summary>
+    /// Adds playwright test environment as scoped.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The result of the operation.</returns>
     public static IServiceCollection AddPlaywrightTestEnvironmentAsScoped(this IServiceCollection services)
     {
         services.AddNetworkUtilAsScoped()
