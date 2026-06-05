@@ -41,7 +41,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Playwrights.Installation" Version="4.0.35" />
+        <PackageReference Include="Soenneker.Playwrights.Installation" Version="4.0.37" />
         <PackageReference Include="Soenneker.Playwrights.Session" Version="4.0.4" />
         <PackageReference Include="Soenneker.Utils.Delay" Version="4.0.67" />
         <PackageReference Include="Soenneker.Utils.Dotnet" Version="4.0.2392" />
