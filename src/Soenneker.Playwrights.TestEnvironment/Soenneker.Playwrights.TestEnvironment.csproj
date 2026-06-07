@@ -45,7 +45,7 @@
         <PackageReference Include="Soenneker.Playwrights.Session" Version="4.0.6" />
         <PackageReference Include="Soenneker.Utils.Delay" Version="4.0.69" />
         <PackageReference Include="Soenneker.Utils.Dotnet" Version="4.0.2406" />
-        <PackageReference Include="Soenneker.Utils.HttpClientCache" Version="4.0.1947" />
+        <PackageReference Include="Soenneker.Utils.HttpClientCache" Version="4.0.1958" />
         <PackageReference Include="Soenneker.Utils.Network" Version="4.0.1203" />
     </ItemGroup>
 </Project>
