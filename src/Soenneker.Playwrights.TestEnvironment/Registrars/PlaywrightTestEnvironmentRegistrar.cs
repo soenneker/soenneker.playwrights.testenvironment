@@ -15,10 +15,10 @@ namespace Soenneker.Playwrights.TestEnvironment.Registrars;
 public static class PlaywrightTestEnvironmentRegistrar
 {
     /// <summary>
-    /// Adds playwright test environment as singleton.
+    /// Registers Playwright Test Environment with a singleton lifetime.
     /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <returns>The result of the operation.</returns>
+    /// <param name="services">Service collection that receives the registration.</param>
+    /// <returns>The same service collection, so additional registrations can be chained.</returns>
     public static IServiceCollection AddPlaywrightTestEnvironmentAsSingleton(this IServiceCollection services)
     {
         services.AddNetworkUtilAsSingleton()
@@ -34,10 +34,10 @@ public static class PlaywrightTestEnvironmentRegistrar
     }
 
     /// <summary>
-    /// Adds playwright test environment as scoped.
+    /// Registers Playwright Test Environment with a scoped lifetime.
     /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <returns>The result of the operation.</returns>
+    /// <param name="services">Service collection that receives the registration.</param>
+    /// <returns>The same service collection, so additional registrations can be chained.</returns>
     public static IServiceCollection AddPlaywrightTestEnvironmentAsScoped(this IServiceCollection services)
     {
         services.AddNetworkUtilAsScoped()
