@@ -1,17 +1,17 @@
 namespace Soenneker.Playwrights.TestEnvironment.Options;
 
 /// <summary>
-/// Represents the playwright session options.
+/// Overrides page and browser-context reuse for one test session.
 /// </summary>
 public sealed class PlaywrightSessionOptions
 {
     /// <summary>
-    /// Gets or sets a value indicating whether reuse browser context across sessions.
+    /// Reuses the environment's shared browser context when <c>true</c>. A null value uses the host default.
     /// </summary>
     public bool? ReuseBrowserContextAcrossSessions { get; init; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether reuse page across sessions.
+    /// Reuses the environment's shared page when <c>true</c>. This also implies context reuse. A null value uses the host default.
     /// </summary>
     public bool? ReusePageAcrossSessions { get; init; }
 }

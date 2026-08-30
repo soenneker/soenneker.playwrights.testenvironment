@@ -1,61 +1,87 @@
 [![](https://img.shields.io/nuget/v/soenneker.playwrights.testenvironment.svg?style=for-the-badge)](https://www.nuget.org/packages/soenneker.playwrights.testenvironment/)
 [![](https://img.shields.io/github/actions/workflow/status/soenneker/soenneker.playwrights.testenvironment/publish-package.yml?style=for-the-badge)](https://github.com/soenneker/soenneker.playwrights.testenvironment/actions/workflows/publish-package.yml)
 [![](https://img.shields.io/nuget/dt/soenneker.playwrights.testenvironment.svg?style=for-the-badge)](https://www.nuget.org/packages/soenneker.playwrights.testenvironment/)
+[![](https://img.shields.io/github/actions/workflow/status/soenneker/soenneker.playwrights.testenvironment/codeql.yml?label=CodeQL&style=for-the-badge)](https://github.com/soenneker/soenneker.playwrights.testenvironment/actions/workflows/codeql.yml)
 
 # Soenneker.Playwrights.TestEnvironment
 
-Defines the playwright test environment contract.
+Runs an ASP.NET Core project on an available loopback port and provides headless Playwright sessions for integration tests.
 
-## Install
+## Installation
 
 ```bash
 dotnet add package Soenneker.Playwrights.TestEnvironment
 ```
 
-## Quick start
+## Registration
+
+Register the host options and environment in the test service collection:
 
 ```csharp
-using Soenneker.Playwrights.TestEnvironment.Registrars;
 using Microsoft.Extensions.DependencyInjection;
+using Soenneker.Playwrights.TestEnvironment.Options;
+using Soenneker.Playwrights.TestEnvironment.Registrars;
 
-var services = new ServiceCollection();
-var result = services.AddPlaywrightTestEnvironmentAsSingleton();
+services.AddSingleton(new PlaywrightTestHostOptions
+{
+    SolutionFileName = "MyApp.slnx",
+    ProjectRelativePath = "src/MyApp/MyApp.csproj",
+    ApplicationName = "MyApp",
+    Restore = true,
+    Build = true,
+    BuildConfiguration = "Release"
+});
+
+services.AddPlaywrightTestEnvironmentAsSingleton();
 ```
 
-Registers Playwright Test Environment with a singleton lifetime.
+Use the singleton registration for a test host shared by the suite. `AddPlaywrightTestEnvironmentAsScoped()` gives each scope its own mutable host runtime, while the Playwright installer and HTTP transport remain process-wide singletons.
 
-## What you get
+## Start the application and create a session
 
-- `IPlaywrightTestEnvironment` — Defines the playwright test environment contract.
-- `PlaywrightTestEnvironmentRegistrar` — A utility library for configuration related operations.
-- `PlaywrightSessionOptions` — Represents the playwright session options.
-- `PlaywrightTestHostOptions` — Represents the playwright test host options.
-- `PlaywrightTestHostRuntime` — Represents the playwright test host runtime.
+```csharp
+using Soenneker.Playwrights.TestEnvironment.Abstract;
 
-## API at a glance
+IPlaywrightTestEnvironment environment =
+    serviceProvider.GetRequiredService<IPlaywrightTestEnvironment>();
 
-| API | What it does | Result / important behavior |
-| --- | --- | --- |
-| `IPlaywrightTestEnvironment.BaseUrl` | Gets base url. | Gets base url. |
-| `IPlaywrightTestEnvironment.Initialize(projectPath, cancellationToken)` | Initializes the Playwright Test Environment so it is ready for use. | A task that completes when the Playwright Test Environment is ready for use. |
-| `PlaywrightTestEnvironmentRegistrar.AddPlaywrightTestEnvironmentAsSingleton(services)` | Registers Playwright Test Environment with a singleton lifetime. | The same service collection, so additional registrations can be chained. |
-| `PlaywrightTestEnvironmentRegistrar.AddPlaywrightTestEnvironmentAsScoped(services)` | Registers Playwright Test Environment with a scoped lifetime. | The same service collection, so additional registrations can be chained. |
-| `PlaywrightSessionOptions.ReuseBrowserContextAcrossSessions` | Gets or sets a value indicating whether reuse browser context across sessions. | Gets or sets a value indicating whether reuse browser context across sessions. |
-| `PlaywrightSessionOptions.ReusePageAcrossSessions` | Gets or sets a value indicating whether reuse page across sessions. | Gets or sets a value indicating whether reuse page across sessions. |
-| `PlaywrightTestHostOptions.SolutionFileName` | Gets or sets solution file name. | Gets or sets solution file name. |
-| `PlaywrightTestHostOptions.ProjectRelativePath` | Gets or sets project relative path. | Gets or sets project relative path. |
-| `PlaywrightTestHostOptions.ApplicationName` | Gets or sets application name. | Gets or sets application name. |
-| `PlaywrightTestHostOptions.Restore` | Gets or sets a value indicating whether restore. | Gets or sets a value indicating whether restore. |
-| `PlaywrightTestHostOptions.Build` | Gets or sets a value indicating whether build. | Gets or sets a value indicating whether build. |
-| `PlaywrightTestHostOptions.BuildConfiguration` | Gets or sets build configuration. | Gets or sets build configuration. |
-| `PlaywrightTestHostOptions.ReuseBrowserContextAcrossSessions` | Gets or sets a value indicating whether reuse browser context across sessions. | Gets or sets a value indicating whether reuse browser context across sessions. |
-| `PlaywrightTestHostOptions.ReusePageAcrossSessions` | Gets or sets a value indicating whether reuse page across sessions. | Gets or sets a value indicating whether reuse page across sessions. |
-| `PlaywrightTestHostRuntime.BaseUrl` | Gets or sets base url. | Gets or sets base url. |
-| `PlaywrightTestHostRuntime.Playwright` | Gets or sets playwright. | Gets or sets playwright. |
-| `PlaywrightTestHostRuntime.Browser` | Gets or sets browser. | Gets or sets browser. |
-| `PlaywrightTestHostRuntime.SharedContext` | Gets or sets shared context. | Gets or sets shared context. |
+await environment.Initialize(
+    @"C:\git\MyApp\src\MyApp\MyApp.csproj",
+    cancellationToken);
 
-## Practical notes
+await using var session = await environment.CreateSession(cancellationToken: cancellationToken);
 
-- Cancellation stops pending work; it does not undo work that has already completed.
-- Dispose instances you own when their scope ends so held resources can be released.
+await session.Page.GotoAsync("/");
+await Assertions.Expect(session.Page.GetByRole(AriaRole.Heading))
+                .ToBeVisibleAsync();
+```
+
+`Initialize` installs the configured Playwright browser if needed, starts Chromium, launches the project at `BaseUrl`, and waits until the application accepts HTTP requests. Dispose the environment to close Playwright and terminate the application process.
+
+## Session reuse
+
+Sessions get their own context and page unless reuse is enabled:
+
+```csharp
+services.AddSingleton(new PlaywrightTestHostOptions
+{
+    SolutionFileName = "MyApp.slnx",
+    ProjectRelativePath = "src/MyApp/MyApp.csproj",
+    ReuseBrowserContextAcrossSessions = true,
+    ReusePageAcrossSessions = false
+});
+```
+
+Per-session overrides take precedence over the host defaults:
+
+```csharp
+await using var session = await environment.CreateSession(
+    new PlaywrightSessionOptions
+    {
+        ReuseBrowserContextAcrossSessions = true,
+        ReusePageAcrossSessions = false
+    },
+    cancellationToken);
+```
+
+Reusing a page implies reusing its context. A session does not dispose shared pages or contexts; the environment owns and releases them.

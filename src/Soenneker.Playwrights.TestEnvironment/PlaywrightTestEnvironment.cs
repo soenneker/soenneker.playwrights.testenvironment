@@ -19,7 +19,6 @@ using Soenneker.Utils.Network.Abstract;
 
 namespace Soenneker.Playwrights.TestEnvironment;
 
-/// <inheritdoc cref="IPlaywrightTestEnvironment"/>
 public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
 {
     private readonly AsyncLock _sharedSessionLock = new();
@@ -252,10 +251,6 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
             _logger.LogInformation("{Output}", formatted);
     }
 
-    /// <summary>
-    /// Asynchronously releases resources used by the current instance.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
     public async ValueTask DisposeAsync()
     {
         Exception? exception = null;
@@ -265,44 +260,52 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
             if (_runtime.SharedPage is not null && !_runtime.SharedPage.IsClosed)
                 await _runtime.SharedPage.CloseAsync().NoSync();
 
-            _runtime.SharedPage = null;
         }
         catch (Exception ex)
         {
-            exception = ex;
+            exception ??= ex;
         }
+
+        _runtime.SharedPage = null;
 
         try
         {
             if (_runtime.SharedContext is not null)
             {
                 await _runtime.SharedContext.DisposeAsync().NoSync();
-                _runtime.SharedContext = null;
             }
         }
         catch (Exception ex)
         {
-            exception = ex;
+            exception ??= ex;
         }
+
+        _runtime.SharedContext = null;
 
         try
         {
             if (_runtime.Browser is not null)
+            {
                 await _runtime.Browser.DisposeAsync().NoSync();
+            }
         }
-        catch (Exception ex) when (exception is null)
+        catch (Exception ex)
         {
-            exception = ex;
+            exception ??= ex;
         }
+
+        _runtime.Browser = null;
 
         try
         {
             _runtime.Playwright?.Dispose();
         }
-        catch (Exception ex) when (exception is null)
+        catch (Exception ex)
         {
-            exception = ex;
+            exception ??= ex;
         }
+
+        _runtime.Playwright = null;
 
         try
         {
@@ -311,22 +314,24 @@ public class PlaywrightTestEnvironment : IPlaywrightTestEnvironment
                 try
                 {
                     if (!_runtime.DemoProcess.HasExited)
+                    {
                         _runtime.DemoProcess.Kill(entireProcessTree: true);
+                        await _runtime.DemoProcess.WaitForExitAsync().NoSync();
+                    }
                 }
                 catch (InvalidOperationException)
                 {
                 }
 
                 _runtime.DemoProcess.Dispose();
-                _runtime.DemoProcess = null;
             }
         }
-        catch (Exception ex) when (exception is null)
+        catch (Exception ex)
         {
-            exception = ex;
+            exception ??= ex;
         }
 
-        await _httpClientCache.Remove(GetType().FullName ?? nameof(PlaywrightTestEnvironment)).NoSync();
+        _runtime.DemoProcess = null;
 
         if (exception is not null)
             throw exception;

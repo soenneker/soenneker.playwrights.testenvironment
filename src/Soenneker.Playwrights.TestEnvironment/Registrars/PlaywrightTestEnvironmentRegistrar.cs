@@ -10,7 +10,7 @@ using Soenneker.Utils.Network.Registrars;
 namespace Soenneker.Playwrights.TestEnvironment.Registrars;
 
 /// <summary>
-/// A utility library for configuration related operations
+/// Registers the Playwright test environment and its process-wide dependencies.
 /// </summary>
 public static class PlaywrightTestEnvironmentRegistrar
 {
@@ -46,7 +46,7 @@ public static class PlaywrightTestEnvironmentRegistrar
                 .AddHttpClientCacheAsSingleton()
                 .AddPlaywrightInstallationUtilAsSingleton();
 
-        services.TryAddSingleton<PlaywrightTestHostRuntime>();
+        services.TryAddScoped<PlaywrightTestHostRuntime>();
         services.TryAddScoped<IPlaywrightTestEnvironment, PlaywrightTestEnvironment>();
 
         return services;
