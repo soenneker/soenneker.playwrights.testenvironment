@@ -42,11 +42,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Playwrights.Installation" Version="4.0.205" />
+        <PackageReference Include="Soenneker.Playwrights.Installation" Version="4.0.206" />
         <PackageReference Include="Soenneker.Playwrights.Session" Version="4.0.19" />
         <PackageReference Include="Soenneker.Utils.Delay" Version="4.0.91" />
-        <PackageReference Include="Soenneker.Utils.Dotnet" Version="4.0.2614" />
-        <PackageReference Include="Soenneker.Utils.HttpClientCache" Version="4.0.2096" />
+        <PackageReference Include="Soenneker.Utils.Dotnet" Version="4.0.2615" />
+        <PackageReference Include="Soenneker.Utils.HttpClientCache" Version="4.0.2097" />
         <PackageReference Include="Soenneker.Utils.Network" Version="4.0.1236" />
     </ItemGroup>
     <ItemGroup>
