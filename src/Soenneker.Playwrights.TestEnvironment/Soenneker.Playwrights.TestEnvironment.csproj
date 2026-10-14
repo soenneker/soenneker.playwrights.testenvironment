@@ -43,11 +43,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Playwrights.Installation" Version="4.0.223" />
+        <PackageReference Include="Soenneker.Playwrights.Installation" Version="4.0.224" />
         <PackageReference Include="Soenneker.Playwrights.Session" Version="4.0.27" />
         <PackageReference Include="Soenneker.Utils.Delay" Version="4.0.103" />
-        <PackageReference Include="Soenneker.Utils.Dotnet" Version="4.0.2650" />
-        <PackageReference Include="Soenneker.Utils.HttpClientCache" Version="4.0.2123" />
+        <PackageReference Include="Soenneker.Utils.Dotnet" Version="4.0.2651" />
+        <PackageReference Include="Soenneker.Utils.HttpClientCache" Version="4.0.2124" />
         <PackageReference Include="Soenneker.Utils.Network" Version="4.0.1245" />
     </ItemGroup>
     <ItemGroup>
@@ -56,6 +56,6 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
-        <PackageReference Include="Soenneker.Extensions.String" Version="4.0.790" />
+        <PackageReference Include="Soenneker.Extensions.String" Version="4.0.791" />
     </ItemGroup>
 </Project>
