@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>net11.0</TargetFramework>
         <IsAotCompatible>true</IsAotCompatible>
         <Nullable>enable</Nullable>
         <Platforms>AnyCPU</Platforms>
@@ -9,7 +9,7 @@
 
     <PropertyGroup>
         <Description>A test environment for testing with Playwright</Description>
-        <Version Condition="'$(BUILD_VERSION)' == ''">4.0.0</Version>
+        <Version Condition="'$(BUILD_VERSION)' == ''">11.0.0</Version>
         <Version Condition="'$(BUILD_VERSION)' != ''">$(BUILD_VERSION)</Version>
         <AssemblyName>Soenneker.Playwrights.TestEnvironment</AssemblyName>
         <PackageId>Soenneker.Playwrights.TestEnvironment</PackageId>
@@ -43,19 +43,17 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Playwrights.Installation" Version="4.0.230" />
+        <PackageReference Include="Soenneker.Playwrights.Installation" Version="4.0.232" />
         <PackageReference Include="Soenneker.Playwrights.Session" Version="4.0.30" />
-        <PackageReference Include="Soenneker.Utils.Delay" Version="4.0.104" />
+        <PackageReference Include="Soenneker.Utils.Delay" Version="4.0.105" />
         <PackageReference Include="Soenneker.Utils.Dotnet" Version="4.0.2656" />
         <PackageReference Include="Soenneker.Utils.HttpClientCache" Version="4.0.2128" />
-        <PackageReference Include="Soenneker.Utils.Network" Version="4.0.1246" />
+        <PackageReference Include="Soenneker.Utils.Network" Version="4.0.1247" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Soenneker.Extensions.ValueTask" Version="4.0.133" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
-        <PackageReference Include="Soenneker.Extensions.String" Version="4.0.799" />
+        <PackageReference Include="Soenneker.Extensions.String" Version="4.0.800" />
     </ItemGroup>
 </Project>
